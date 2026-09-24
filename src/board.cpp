@@ -188,10 +188,10 @@ std::optional<chess_move> board::create_move(const std::string_view san) const
             const auto short_move = parse_san(short_san);
             if (short_move == move) return {};
             return move;
-        } catch (uci::SanParseError) {
+        } catch (...) {
             return move;
         }
-    } catch (uci::SanParseError) {
+    } catch (...) {
         return {};
     }
 }
