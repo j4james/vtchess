@@ -75,20 +75,27 @@ int main(const int argc, const char* argv[])
     std::cout << "\033[2J";
     // Hide the cursor.
     std::cout << "\033[?25l";
-    // Save the original state of the status display.
-    const auto original_decssdt = caps.query_setting("$~");
-    // Hide the status line.
-    std::cout << "\033[0$~";
-    // If we have less than 25 rows, try and get the terminal to use the
-    // additional row just freed up by the hidden status line.
+    // If we have less than 25 rows, we'll try and obtain an additional row
+    // from the status line on terminals that have one.
+    auto original_decssdt = std::string{};
     auto original_decslpp = std::string{};
-    if (caps.height < 25) {
+    if (caps.height < 25 && caps.has_status_display) {
+        // Save the state of the status line and the current page height.
+        original_decssdt = caps.query_setting("$~");
         original_decslpp = caps.query_setting("t");
+        // Hide the status line and try and set the page height to 25.
+        std::cout << "\033[0$~";
         std::cout << "\033[25t";
         // Reset the margins, else they'll still be limited to 24.
         std::cout << "\033[r";
         // Recalculate the window size to see if we have more space now.
         caps.query_window_size();
+        // If we still don't have 25 rows, make the status line host-writable,
+        // so we can at least use it as an additional pseudo-row.
+        if (caps.height < 25) {
+            std::cout << "\033[2$~";
+            std::cout << "\033[24t";
+        }
     }
     // Display title banner
     const auto clear_banner = title_banner(caps);
@@ -104,19 +111,23 @@ int main(const int argc, const char* argv[])
     engine engine{screen, record, caps, options};
     while (engine.run())
         record.reset();
+    screen.flush();
 
-    // Reset attributes.
-    std::cout << "\033[m";
-    // Clear the window title.
-    std::cout << "\033]21;\033\\";
-    // Clear the screen.
-    std::cout << "\033[H\033[J";
+    // If we've been using the status display, make sure it's cleared.
+    if (caps.height < 25 && caps.has_status_display)
+        std::cout << "\033[1$}\033[2K\033[0$}";
     // Restore the original status display type.
     if (!original_decssdt.empty())
         std::cout << "\033[" << original_decssdt;
     // Restore the original lines per page.
     if (!original_decslpp.empty())
         std::cout << "\033[" << original_decslpp;
+    // Reset attributes.
+    std::cout << "\033[m";
+    // Clear the window title.
+    std::cout << "\033]21;\033\\";
+    // Clear the screen.
+    std::cout << "\033[H\033[J";
     // Show the cursor.
     std::cout << "\033[?25h";
 

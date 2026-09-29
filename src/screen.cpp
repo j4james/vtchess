@@ -12,7 +12,8 @@
 #include <string>
 
 screen::screen(const capabilities& caps, const options& options)
-    : _caps{caps}, _using_colors{options.color && caps.has_color}
+    : _caps{caps}, _using_colors{options.color && caps.has_color},
+      _using_status_display{caps.height == 24 && caps.has_status_display}
 {
     _ri = caps.has_8bit ? "\215" : "\033M";
     _csi = caps.has_8bit ? "\233" : "\033[";
@@ -23,16 +24,19 @@ screen::screen(const capabilities& caps, const options& options)
     _y_indent = std::max((caps.height - 25) / 2, 0) - (top_row_visible() ? 0 : 1);
     _x_indent = std::max((caps.width - 80) / 4, 0);
     // All of the rows need to have a double-width line rendition.
-    sgr(sgr::normal);
     for (auto y = top_row_visible() ? 0 : 1; y < 25; y++) {
+        focus_status_display(y == 24);
         cup(y, 0);
+        sgr(sgr::normal);
         _write("\033#6");
     }
-}
-
-screen::~screen()
-{
-    flush();
+    // Designate the soft font in G1 for both the status and main display.
+    if (_using_status_display) {
+        focus_status_display(true);
+        _write("\033) @");
+    }
+    focus_status_display(false);
+    _write("\033) @");
 }
 
 bool screen::using_colors() const
@@ -136,6 +140,21 @@ void screen::select_charset(const charset cs)
     }
 }
 
+void screen::focus_status_display(const bool focused)
+{
+    if (_using_status_display && _status_display_focused != focused) {
+        _status_display_focused = focused;
+        _write(_csi, focused ? 1 : 0, "$}");
+        // The main display and status display track cursor position and other
+        // attributes separately. So when switching focus we need to clear our
+        // "last" tracking fields, so we don't make incorrect assumptions about
+        // the current state.
+        _last_x = _last_y = -1;
+        _last_attrs = sgr::unknown;
+        _last_charset = charset::unknown;
+    }
+}
+
 void screen::show_cursor(const bool visible)
 {
     _write(_csi, visible ? "?25h" : "?25l");
@@ -204,7 +223,7 @@ void screen::wait_until_done()
 
 bool screen::top_row_visible() const
 {
-    return _caps.height >= 25;
+    return _caps.height >= 25 || _using_status_display;
 }
 
 void screen::_move_y_relative(const int diff_y)

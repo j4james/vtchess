@@ -26,6 +26,7 @@ public:
     bool has_sixel = false;
     bool has_soft_fonts = false;
     bool has_full_cell_fonts = false;
+    bool has_status_display = false;
     bool has_color = false;
     bool has_rectangle_ops = false;
     bool has_8bit = false;

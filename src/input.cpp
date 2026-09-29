@@ -108,6 +108,7 @@ chess_move input::get_move()
     }
 
     for (;;) {
+        _screen.focus_status_display();
         _screen.cup(TOP, LEFT + _buffer.length());
         _screen.show_cursor();
         _screen.flush();
@@ -186,6 +187,9 @@ char input::popup_dialog(const std::string_view message)
         start = lf + 1;
     }
 
+    _screen.show_cursor(false);
+    _screen.focus_status_display(false);
+
     // On terminals that support multiple pages, we can save the the background
     // by copying it to another page, and then copy it back when the dialog is
     // closed. On lower level terminals we're forced to redraw the background.
@@ -203,7 +207,6 @@ char input::popup_dialog(const std::string_view message)
     // │    │  x    x
     // └────┘  mqqqqj
     auto yy = y;
-    _screen.show_cursor(false);
     _screen.select_charset(charset::lines);
     _screen.sgr(_attrs[DIALOG_BORDER]);
     _screen.cup(yy++, x);
@@ -269,6 +272,7 @@ void input::press_any_key()
     // terminal for a DSR-CPR report, which eats any other input in the buffer.
     std::this_thread::sleep_for(2s);
     _screen.wait_until_done();
+    _screen.focus_status_display();
     _screen.select_charset(charset::ascii);
     _screen.cup(TOP, LEFT - 1);
     _screen.write("Press any key", _attrs[UNVERIFIED] | sgr::blink);
@@ -287,6 +291,7 @@ void input::_add_to_input(const char ch)
     if (_buffer.length() < 11) {
         _undo_focus();
         const auto attr = _attrs[_buffer_verified ? VERIFIED : UNVERIFIED];
+        _screen.focus_status_display();
         _screen.select_charset(charset::ascii);
         _screen.cup(TOP, LEFT + _buffer.length());
         _screen.write(ch, attr);
@@ -300,6 +305,7 @@ void input::_undo_input()
     if (!_buffer.empty()) {
         _undo_focus();
         _buffer.pop_back();
+        _screen.focus_status_display();
         _screen.select_charset(charset::ascii);
         _screen.cup(TOP, LEFT + _buffer.length());
         _screen.write(' ', _attrs[UNVERIFIED]);
@@ -333,6 +339,7 @@ void input::_clear_input()
     if (!_buffer.empty()) {
         _buffer = {};
         _buffer_verified = false;
+        _screen.focus_status_display();
         _screen.sgr(_attrs[UNVERIFIED]);
         _screen.cup(TOP, LEFT);
         _screen.clear_to_end_of_line();
@@ -456,6 +463,7 @@ void input::_undo_focus()
 
 void input::_render_prompt() const
 {
+    _screen.focus_status_display();
     _screen.cup(TOP, LEFT - 1);
     _screen.select_charset(charset::sprites);
     _screen.write('*', _attrs[PROMPT]);

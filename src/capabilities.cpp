@@ -17,12 +17,7 @@ capabilities::capabilities()
     std::cout << "\0337";
     // Request 7-bit C1 controls from the terminal.
     std::cout << "\033 F";
-    // Determine the addressable page size.
-    std::cout << "\033[999;999H";
-    const auto size = query_cursor_position();
-    if (size) std::tie(height, width) = size.value();
-    // But on terminals with windowing, what we really care about is the visible
-    // window size. This will replace the height and width calculated above.
+    // Determine the visible window size.
     query_window_size();
     // Check if 8-bit controls are supported.
     std::cout << "\0338\2335n\033[1K";
@@ -51,11 +46,18 @@ capabilities::~capabilities()
 
 void capabilities::query_window_size()
 {
+    // On terminals with windowing, what we care about is the visible window
+    // size. But if that isn't supported, we can always fallback to the page
+    // size, by querying the cursor position in the bottom right corner.
     std::cout << "\033[\"v";
     const auto report = _query(R"(\x1B\[(\d+);(\d+)[;\d]+"w)", true);
     if (!report.empty()) {
         height = std::stoi(report[1]);
         width = std::stoi(report[2]);
+    } else {
+        std::cout << "\033[999;999H";
+        const auto size = query_cursor_position();
+        if (size) std::tie(height, width) = size.value();
     }
 }
 
@@ -111,9 +113,10 @@ void capabilities::_query_device_attributes()
     if (!report.empty()) {
         // The first parameter indicates the terminal conformance level.
         level = std::stoi(report[1]);
+        // Level 3+ conformance implies support for the status display.
+        if (level >= 63) has_status_display = true;
         // Level 4+ conformance implies support for rectangle ops.
-        if (level >= 64)
-            has_rectangle_ops = true;
+        if (level >= 64) has_rectangle_ops = true;
         // The remaining parameters indicate additional feature extensions.
         const auto features = report[2].str();
         const auto digits = std::regex(R"(\d+)");
@@ -123,6 +126,7 @@ void capabilities::_query_device_attributes()
             switch (feature) {
                 case 4: has_sixel = true; break;
                 case 7: has_soft_fonts = true; break;
+                case 11: has_status_display = true; break;
                 case 22: has_color = true; break;
                 case 28: has_rectangle_ops = true; break;
             }

@@ -550,8 +550,6 @@ soft_font::soft_font(capabilities& caps)
             for (auto i = 0; i < 100; i++)
                 std::cout << "\033[0;1m";
         std::cout << "\033[m";
-        // Designate our soft font in G1.
-        std::cout << "\033) @";
     }
 }
 

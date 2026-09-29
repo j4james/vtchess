@@ -39,11 +39,11 @@ enum class charset {
 class screen {
 public:
     screen(const capabilities& caps, const options& options);
-    ~screen();
     bool using_colors() const;
     void sgr(const int attrs);
     void cup(const int y, const int x);
     void select_charset(const charset cs);
+    void focus_status_display(const bool focus = true);
     void show_cursor(const bool visible = true);
     void clear_to_end_of_line();
     void erase_rect(const int y, const int x, const int y2, const int x2);
@@ -71,6 +71,7 @@ private:
 
     const capabilities& _caps;
     const bool _using_colors;
+    const bool _using_status_display;
     const char* _ri;
     const char* _csi;
     int _y_indent;
@@ -79,6 +80,7 @@ private:
     int _last_x = -1;
     int _last_attrs = sgr::unknown;
     charset _last_charset = charset::unknown;
+    bool _status_display_focused = false;
     std::array<char, 1024> _buffer = {};
     int _buffer_index = 0;
 };

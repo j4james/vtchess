@@ -116,8 +116,9 @@ void board::render_background()
 
 void board::render_background(const int y, const int x, const int y2, const int x2)
 {
-    _screen.select_charset(charset::sprites);
     for (auto cell_y = y; cell_y <= y2; cell_y++) {
+        _screen.focus_status_display(cell_y == 24);
+        _screen.select_charset(charset::sprites);
         _screen.cup(cell_y, x);
         for (auto cell_x = x; cell_x <= x2; cell_x++) {
             const auto [ch, color] = _cell_content(cell_y, cell_x);
@@ -131,6 +132,7 @@ void board::render_square(const coord pos, const bool focused, const std::option
 {
     const auto y = pos.y * 3 + 1;
     const auto x = pos.x * 3 + 1;
+    _screen.focus_status_display(false);
     _screen.select_charset(charset::sprites);
     for (auto cell_y = y; cell_y < y + 2; cell_y++) {
         _screen.cup(cell_y, x);

@@ -37,6 +37,7 @@ record::record(screen& screen)
 void record::reset()
 {
     const auto top = _screen.top_row_visible() ? 0 : 1;
+    _screen.focus_status_display(false);
     _screen.sgr(sgr::normal);
     _screen.erase_rect(top + 3, 25, 22, 40);
     _moves.clear();
@@ -45,6 +46,7 @@ void record::reset()
 void record::add(const std::string_view move)
 {
     const auto max_moves = _screen.top_row_visible() ? 40 : 38;
+    _screen.focus_status_display(false);
     if (_moves.size() >= max_moves) {
         _moves.erase(_moves.begin(), _moves.begin() + 2);
         _scroll_up();
@@ -69,6 +71,7 @@ void record::game_over(const std::string_view reason)
 void record::_render_title()
 {
     const auto top = _screen.top_row_visible() ? 0 : 1;
+    _screen.focus_status_display(false);
     _screen.sgr(_attrs[TITLE]);
     _screen.select_charset(charset::lines);
     _screen.cup(top, 26);
