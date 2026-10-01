@@ -39,7 +39,7 @@ void record::reset()
     const auto top = _screen.top_row_visible() ? 0 : 1;
     _screen.focus_status_display(false);
     _screen.sgr(sgr::normal);
-    _screen.erase_rect(top + 3, 25, 22, 40);
+    _screen.erase_rect(top + 3, 26, 22, 39);
     _moves.clear();
 }
 
@@ -113,7 +113,7 @@ void record::_scroll_up() const
 {
     const auto top = _screen.top_row_visible() ? 3 : 4;
     const auto height = _moves.size() / 2;
-    if (!_screen.copy_rect(top + 1, 26, 22, 40, 1, top, 26, 1)) {
+    if (!_screen.copy_rect(top + 1, 26, 22, 39, 1, top, 26, 1)) {
         for (auto i = 0; i < _moves.size(); i++)
             _render_move(_moves[i], i, i % 2 == 0);
     }

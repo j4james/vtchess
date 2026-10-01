@@ -168,7 +168,7 @@ void screen::clear_to_end_of_line()
 void screen::erase_rect(const int y, const int x, const int y2, const int x2)
 {
     if (_caps.has_rectangle_ops)
-        _write(_csi, _abs_y(y), ';', _abs_x(x), ';', _abs_y(y2), ';', _abs_x(x2), ';', "$z");
+        _write(_csi, _abs_y(y), ';', _abs_x(x), ';', _abs_y(y2), ';', _abs_x(x2), "$z");
     else {
         const auto width = x2 - x + 1;
         for (auto yy = y; yy <= y2; yy++) {
