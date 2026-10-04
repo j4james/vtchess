@@ -88,6 +88,8 @@ int main(const int argc, const char* argv[])
         std::cout << "\033[25t";
         // Reset the margins, else they'll still be limited to 24.
         std::cout << "\033[r";
+        // Make sure the additional line is clear.
+        std::cout << "\033[J" << std::flush;
         // Recalculate the window size to see if we have more space now.
         caps.query_window_size();
         // If we still don't have 25 rows, make the status line host-writable,
@@ -115,19 +117,19 @@ int main(const int argc, const char* argv[])
 
     // If we've been using the status display, make sure it's cleared.
     if (caps.height < 25 && caps.has_status_display)
-        std::cout << "\033[1$}\033[2K\033[0$}";
-    // Restore the original status display type.
-    if (!original_decssdt.empty())
-        std::cout << "\033[" << original_decssdt;
-    // Restore the original lines per page.
-    if (!original_decslpp.empty())
-        std::cout << "\033[" << original_decslpp;
+        std::cout << "\033[1$}\033[m\033[2K\033[0$}";
     // Reset attributes.
     std::cout << "\033[m";
     // Clear the window title.
     std::cout << "\033]21;\033\\";
     // Clear the screen.
     std::cout << "\033[H\033[J";
+    // Restore the original status display type.
+    if (!original_decssdt.empty())
+        std::cout << "\033[" << original_decssdt;
+    // Restore the original lines per page.
+    if (!original_decslpp.empty())
+        std::cout << "\033[" << original_decslpp;
     // Show the cursor.
     std::cout << "\033[?25h";
 
