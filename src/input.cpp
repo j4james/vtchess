@@ -111,6 +111,7 @@ chess_move input::get_move()
         _screen.focus_status_display();
         _screen.cup(TOP, LEFT + _buffer.length());
         _screen.show_cursor();
+        _screen.sgr(sgr::normal);
         _screen.flush();
         const auto key = get_key();
         _screen.show_cursor(false);
@@ -249,6 +250,7 @@ char input::popup_dialog(const std::string_view message)
     _screen.write("x");
     _screen.cup(yy, x);
     _screen.write('m' + std::string(width - 2, 'q') + 'j');
+    _screen.sgr(sgr::normal);
     _screen.flush();
 
     for (;;) {
@@ -276,6 +278,7 @@ void input::press_any_key()
     _screen.select_charset(charset::ascii);
     _screen.cup(TOP, LEFT - 1);
     _screen.write("Press any key", _attrs[UNVERIFIED] | sgr::blink);
+    _screen.sgr(sgr::normal);
     _screen.flush();
     get_key();
     _render_prompt();
@@ -308,7 +311,7 @@ void input::_undo_input()
         _screen.focus_status_display();
         _screen.select_charset(charset::ascii);
         _screen.cup(TOP, LEFT + _buffer.length());
-        _screen.write(' ', _attrs[UNVERIFIED]);
+        _screen.write(' ', sgr::normal);
         _verify_input();
     }
 }
@@ -340,8 +343,8 @@ void input::_clear_input()
         _buffer = {};
         _buffer_verified = false;
         _screen.focus_status_display();
-        _screen.sgr(_attrs[UNVERIFIED]);
         _screen.cup(TOP, LEFT);
+        _screen.sgr(sgr::normal);
         _screen.clear_to_end_of_line();
     }
 }
@@ -467,6 +470,7 @@ void input::_render_prompt() const
     _screen.cup(TOP, LEFT - 1);
     _screen.select_charset(charset::sprites);
     _screen.write('*', _attrs[PROMPT]);
+    _screen.sgr(sgr::normal);
     _screen.clear_to_end_of_line();
     _screen.flush();
 }
