@@ -38,32 +38,37 @@ namespace {
 }  // namespace
 
 engine::engine(screen& screen, record& record, const capabilities& caps, const options& options)
-    : _screen{screen}, _record{record}, _caps{caps}, _options{options}
+    : _screen{screen}, _record{record}, _caps{caps}, _options{options},
+      _human_playing_white{options.playing_white.value_or(random_bool())}
 {
 }
 
 bool engine::run()
 {
     const auto search_depth = _options.level;
-    const auto human_playing_white = _options.playing_white.value_or(random_bool());
     const auto using_full_cell = _caps.has_full_cell_fonts;
 
-    board board{_screen, using_full_cell, human_playing_white};
+    board board{_screen, using_full_cell, _human_playing_white};
     input input{_screen, board};
 
     board.render_background();
 
     // If the computer is playing white, wait a second before letting it move.
-    if (!human_playing_white) std::this_thread::sleep_for(1s);
+    if (!_human_playing_white) std::this_thread::sleep_for(1s);
 
     try {
         for (auto i = 0; !_game_over(board); i++) {
             const auto white_to_move = (i % 2 == 0);
-            if (white_to_move == human_playing_white)
+            if (white_to_move == _human_playing_white)
                 _human_move(board, input);
             else
                 _computer_move(board, search_depth);
         }
+
+        // If a color wasn't explicitly requested, we swap sides every round.
+        if (!_options.playing_white.has_value())
+            _human_playing_white = !_human_playing_white;
+
         input.press_any_key();
         return input.popup_dialog("Play again?\n\n  &Yes  &No") == 'Y';
     } catch (...) {

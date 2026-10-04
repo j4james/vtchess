@@ -27,4 +27,5 @@ private:
     record& _record;
     const capabilities& _caps;
     const options& _options;
+    bool _human_playing_white;
 };
